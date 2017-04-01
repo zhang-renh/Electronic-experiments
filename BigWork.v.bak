@@ -1,4 +1,4 @@
-﻿
+﻿///////////////////////////////
 //以下是时钟分频器			 //
 //base_fre 控制基础频率		 //
 //Time2 的频率是 Time1 的两倍//
@@ -6,9 +6,9 @@
 module clock
 	(input clk,
 	 input clr,
-	 output reg Time1,
-	 output reg Time2,
-	 output reg seg_fre		//数码管刷新频率
+	 output Time1,
+	 output Time2,
+	 output seg_fre		//数码管刷新频率
 	);
 	
 	parameter base_fre = 25;
@@ -28,7 +28,7 @@ module clock
 	
 	always @(*)
 	begin
-		Time1 = clk_cnt[25];
+		Time1 = clk_cnt[base_fre];
 		Time2 = clk_cnt[base_fre+1];
 		seg_fre = clk_cnt[15];
 	end
@@ -37,13 +37,13 @@ endmodule
 //二进制向七段码转换//
 //////////////////////
 module num_to_seg
-	(input wire seg_fre,
+	(input seg_fre,
 	 input[15:0]NUMS,			//四个数码管，每个用4位二进制数表示
-	 output reg[6:0] segment,
-	 output reg[3:0] seg_sel
+	 output reg[6:0] segment
+	 output reg[3:0] seg_sel;
 	);
 	
-	//seg_sel = 4'b0001;
+	seg_sel = "0001";
 	reg[3:0] NUM;
 	
 	always @(*)
@@ -67,9 +67,9 @@ module num_to_seg
 		default	:segment = 7'b0000001;
 	endcase
 	
-	always @(posedge seg_fre)
-	//begin
-		//if (posedge seg_fre)
+	always @(*)
+	begin
+		if (posedge seg_fre)
 			begin
 				seg_sel = seg_sel * 2;
 				case(seg_sel)
@@ -79,7 +79,7 @@ module num_to_seg
 					8	:NUM = NUMS[15:12];
 				endcase
 			end
-	//end	
+	end	
 endmodule
 
 //////////////////
@@ -90,7 +90,7 @@ module led_contral
 	(//input start,
 	 //input over,
 	 input clk,
-	 output reg[7:0] led_state
+	 output reg[led_num:0] led_state
 	 );
 	 
 	 reg[3:0] change;
@@ -108,48 +108,42 @@ endmodule
 ////////////////////
 module switch
 	(
-	 input[7:0] switch,
-	 input[7:0] led_state,
-	 output reg success
-	// output fail
+	 input[sw_num:0] switch,
+	 input[led_num:0] led_state,
+	 output success,
+	 output fail
 	);
 	
-	always @(switch[0])// and led_atate[0]=1)
+	always @(switch[0])
 	begin
-		if(led_state[0] ==1 )
+		if(led_state[0] = 1)
 			success = 1;
 	end
 	
 	always @(switch[1])
 	begin
-		if(led_state[1] == 1)
+		if(led_state[1] = 1)
 			success = 1;
 	end
 	
 endmodule
 
-//////////////////
-//十进制加法器  //
-//////////////////
-
 module dec_counter
 	(input clk,
-	 output reg[3:0] NUM,
-	 output reg carry
+	 output reg[3:0] NUM
+	 output carry;
 	);
 	
-	//NUM = 4'b0000;
+	NUM = 0;
 	
 	always @(posedge clk)
 	begin
 		carry = 0;
 		if(NUM >= 9)
-			begin
-				NUM = 0;
-				carry = 1;
-			end
+			NUM = 0;
+			carry = 1;
 		else
 			NUM = NUM + 1;
 	end
+	
 endmodule
-
