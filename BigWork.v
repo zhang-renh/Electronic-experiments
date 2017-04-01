@@ -100,7 +100,7 @@ module led_contral
 	 begin
 		change = $random % 8;
 		LEDS = 0;
-		LEDS[change] = '1';
+		LEDS[change] = 1;
 		led_state = LEDS;
 	 end
 endmodule
@@ -116,6 +116,16 @@ module switch
 	 output fail
 	);
 	
-	always @(switch)
+	always @(switch[0])
+	begin
+		if(led_state[0] = 1)
+			success = 1;
+	end
+	
+	always @(switch[1])
+	begin
+		if(led_state[1] = 1)
+			success = 1;
+	end
 	
 endmodule
