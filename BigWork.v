@@ -1,0 +1,121 @@
+﻿///////////////////////////////
+//以下是时钟分频器			 //
+//base_fre 控制基础频率		 //
+//Time2 的频率是 Time1 的两倍//
+///////////////////////////////
+module clock
+	(input clk,
+	 input clr,
+	 output Time1,
+	 output Time2,
+	 output seg_fre		//数码管刷新频率
+	);
+	
+	parameter base_fre = 25;
+	reg[32:0] clk_cnt;
+	
+	always @(posedge clk or posedge clr)
+	begin
+		if(clr)
+			clk_cnt = 0;
+		else
+			begin
+				clk_cnt = clk_cnt + 1;
+				if(clk_cnt[32:29]>15)
+					clk_cnt=0;
+			end
+	end
+	
+	always @(*)
+	begin
+		Time1 = clk_cnt[base_fre];
+		Time2 = clk_cnt[base_fre+1];
+		seg_fre = clk_cnt[15];
+	end
+endmodule
+//////////////////////
+//二进制向七段码转换//
+//////////////////////
+module num_to_seg
+	(input seg_fre,
+	 input[15:0]NUMS,			//四个数码管，每个用4位二进制数表示
+	 output reg[6:0] segment
+	 output reg[3:0] seg_sel;
+	);
+	
+	seg_sel = "0001";
+	reg[3:0] NUM;
+	
+	always @(*)
+	case(NUM)
+		0  		:segment = 7'b0000001;
+		1  		:segment = 7'b1001111;
+		2  		:segment = 7'b0010010;
+		3  		:segment = 7'b0000110;
+		4  		:segment = 7'b1001100;
+		5  		:segment = 7'b0100100;
+		6  		:segment = 7'b0100000;
+		7  		:segment = 7'b0001111;
+		8  		:segment = 7'b0000000;
+		9  		:segment = 7'b0000100;
+		'hA		:segment = 7'b0001000;
+		'hB		:segment = 7'b1100000;
+		'hC		:segment = 7'b0110001;
+		'hD		:segment = 7'b1000010;
+		'hE		:segment = 7'b0110000;
+		'hF		:segment = 7'b0111000;
+		default	:segment = 7'b0000001;
+	endcase
+	
+	always @(*)
+	begin
+		if (posedge seg_fre)
+			begin
+				seg_sel = seg_sel * 2;
+				case(seg_sel)
+					1	:NUM = NUMS[3:0];
+					2	:NUM = NUMS[7:4];
+					4	:NUM = NUMS[11:8];
+					8	:NUM = NUMS[15:12];
+				endcase
+			end
+	end	
+endmodule
+
+//////////////////
+//led控制		//
+//每次只有一个灯亮
+//////////////////
+module led_contral
+	(//input start,
+	 //input over,
+	 input clk,
+	 output[led_num:0] led_state
+	 );
+	 
+	 reg[led_num:0] LEDS;
+	 reg[3:0] change;
+	 
+	 always @(posedge clk)
+	 begin
+		change = $random % 8;
+		LEDS = 0;
+		LEDS[change] = '1';
+		led_state = LEDS;
+	 end
+endmodule
+
+////////////////////
+//开关检测与处理  //
+////////////////////
+module switch
+	(
+	 input[sw_num:0] switch,
+	 input[led_num:0] led_state,
+	 output success,
+	 output fail
+	);
+	
+	always @(switch)
+	
+endmodule
