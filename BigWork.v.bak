@@ -1,14 +1,13 @@
-﻿///////////////////////////////
-//以下是时钟分频器			 //
+﻿//以下是时钟分频器			 //
 //base_fre 控制基础频率		 //
 //Time2 的频率是 Time1 的两倍//
 ///////////////////////////////
 module clock
 	(input clk,
 	 input clr,
-	 output Time1,
-	 output Time2,
-	 output seg_fre		//数码管刷新频率
+	 output reg Time1,
+	 output reg Time2,
+	 output reg seg_fre		//数码管刷新频率
 	);
 	
 	parameter base_fre = 25;
@@ -28,22 +27,25 @@ module clock
 	
 	always @(*)
 	begin
-		Time1 = clk_cnt[base_fre];
+		Time1 = clk_cnt[25];
 		Time2 = clk_cnt[base_fre+1];
 		seg_fre = clk_cnt[15];
 	end
+	led_control led(.clk(Time1));
+	num_to_seg n_to_s(.seg_fre(seg_fre));
 endmodule
+
 //////////////////////
 //二进制向七段码转换//
 //////////////////////
 module num_to_seg
-	(input seg_fre,
+	(input seg_fre,//wire seg_fre,
 	 input[15:0]NUMS,			//四个数码管，每个用4位二进制数表示
-	 output reg[6:0] segment
-	 output reg[3:0] seg_sel;
+	 output reg[6:0] segment,
+	 output reg[3:0] seg_sel
 	);
 	
-	seg_sel = "0001";
+	//seg_sel = 4'b0001;
 	reg[3:0] NUM;
 	
 	always @(*)
@@ -67,9 +69,9 @@ module num_to_seg
 		default	:segment = 7'b0000001;
 	endcase
 	
-	always @(*)
-	begin
-		if (posedge seg_fre)
+	always @(posedge seg_fre)
+	//begin
+		//if (posedge seg_fre)
 			begin
 				seg_sel = seg_sel * 2;
 				case(seg_sel)
@@ -79,71 +81,93 @@ module num_to_seg
 					8	:NUM = NUMS[15:12];
 				endcase
 			end
-	end	
+	//end	
 endmodule
+
 
 //////////////////
 //led控制		//
 //每次只有一个灯亮
 //////////////////
-module led_contral
+module led_control
 	(//input start,
 	 //input over,
 	 input clk,
-	 output reg[led_num:0] led_state
+	 output reg[7:0] led_state
 	 );
 	 
 	 reg[3:0] change;
 	 
 	 always @(posedge clk)
 	 begin
-		change = $random % 8;
+		//change = $random % 8;
 		led_state = 0;
 		led_state[change] = 1;
 	 end
+	 switch sw(.led_state(led_state));
 endmodule
 
 ////////////////////
 //开关检测与处理  //
 ////////////////////
 module switch
-	(
-	 input[sw_num:0] switch,
-	 input[led_num:0] led_state,
-	 output success,
-	 output fail
+	(input[7:0] switch,
+	 input[7:0] led_state,
+	 output reg success
+	// output fail
 	);
 	
-	always @(switch[0])
+	always @(switch[0])// and led_atate[0]=1)
 	begin
-		if(led_state[0] = 1)
+		if(led_state[0] ==1 )
 			success = 1;
 	end
 	
 	always @(switch[1])
 	begin
-		if(led_state[1] = 1)
+		if(led_state[1] == 1)
 			success = 1;
 	end
-	
+	dec_counter cn1(.clk(success));
 endmodule
+
+//////////////////
+//十进制加法器  //
+//////////////////
 
 module dec_counter
 	(input clk,
-	 output reg[3:0] NUM
-	 output carry;
+	 output reg[3:0] NUM,
+	 output reg carry
 	);
 	
-	NUM = 0;
+	//NUM = 4'b0000;
 	
 	always @(posedge clk)
 	begin
 		carry = 0;
 		if(NUM >= 9)
-			NUM = 0;
-			carry = 1;
+			begin
+				NUM = 0;
+				carry = 1;
+			end
 		else
 			NUM = NUM + 1;
 	end
+endmodule
+
+module top
+	(input clk,
+	 input[7:0] switch,
+	 output[7:0] led,
+	 output[7:0] segment,
+	 output[3:0] seg_sel
+	);
+	
+	clock clock0(.clk(clk));
+	led_control led(.led_state(led));
+	switch sw(.switch(switch));
+	num_to_seg n_to_s(.segment(segment)
+					  .seg_sel(seg_sel));
 	
 endmodule

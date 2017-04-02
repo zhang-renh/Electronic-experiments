@@ -1,4 +1,5 @@
 ﻿
+
 //以下是时钟分频器			 //
 //base_fre 控制基础频率		 //
 //Time2 的频率是 Time1 的两倍//
@@ -32,12 +33,15 @@ module clock
 		Time2 = clk_cnt[base_fre+1];
 		seg_fre = clk_cnt[15];
 	end
+	//led_control led(.clk(Time1));
+	//num_to_seg n_to_s(.seg_fre(seg_fre));
 endmodule
+
 //////////////////////
 //二进制向七段码转换//
 //////////////////////
 module num_to_seg
-	(input wire seg_fre,
+	(input seg_fre,//wire seg_fre,
 	 input[15:0]NUMS,			//四个数码管，每个用4位二进制数表示
 	 output reg[6:0] segment,
 	 output reg[3:0] seg_sel
@@ -82,11 +86,12 @@ module num_to_seg
 	//end	
 endmodule
 
+
 //////////////////
 //led控制		//
 //每次只有一个灯亮
 //////////////////
-module led_contral
+module led_control
 	(//input start,
 	 //input over,
 	 input clk,
@@ -97,24 +102,24 @@ module led_contral
 	 
 	 always @(posedge clk)
 	 begin
-		change = $random % 8;
+		//change = $random % 8;
 		led_state = 0;
 		led_state[change] = 1;
 	 end
+	// switch sw(.led_state(led_state));
 endmodule
 
 ////////////////////
 //开关检测与处理  //
 ////////////////////
 module switch
-	(
-	 input[7:0] switch,
+	(input[7:0] switch,
 	 input[7:0] led_state,
 	 output reg success
 	// output fail
 	);
 	
-	always @(switch[0])// and led_atate[0]=1)
+	always @(switch[0])// and led_state[0]=1)
 	begin
 		if(led_state[0] ==1 )
 			success = 1;
@@ -125,7 +130,7 @@ module switch
 		if(led_state[1] == 1)
 			success = 1;
 	end
-	
+	//dec_counter cn1(.clk(success));
 endmodule
 
 //////////////////
@@ -153,3 +158,76 @@ module dec_counter
 	end
 endmodule
 
+module top
+	(input clk,
+	 input[7:0] switch,
+	 output[7:0] led,
+	 output[7:0] segment,
+	 output[3:0] seg_sel
+	);
+	
+	
+	wire clk;
+	wire seg_fre;
+	wire[7:0] led_state;
+	wire[15:0] NUMS;
+	wire carry1;
+	wire carry2;
+	wire carry3;
+	wire carry4;
+	//wire[3:0] count2;
+	//wire[3:0] count3;
+	//wire[3:0] count4;
+	
+	clock clock0
+	(
+		.clk(clk)
+		.Time1(clk)
+		.seg_fre(seg_fre)
+	);
+	
+	led_control led
+	(
+		.clk(clk)
+		.led_state(led_state)
+	);
+	
+	switch sw
+	(
+		.led_state(led_state)
+		.switch(switch)
+		.success(carry1)
+	);
+	
+	num_to_seg n_to_s
+	(
+		.seg_fre(seg_fre)
+		.NUMS(NUMS)
+		.segment(segment)
+		.seg_sel(seg_sel)
+	);
+	
+	dec_counter counter1
+	(
+		.clk(carry1)
+		.NUM(NUMS[3:0])
+		.carry(carry2)
+	);
+	dec_counter counter2
+	(
+		.clk(carry2)
+		.NUM(NUMS[7:4])
+		.carry(carry3)
+	);
+	dec_counter counter3
+	(
+		.clk(carry3)
+		.NUM(NUMS[11:8])
+		.carry(carry4)
+	);
+	dec_counter counter4
+	(
+		.clk(carry4)
+		.NUM(NUMS[15:12])
+	);
+endmodule
