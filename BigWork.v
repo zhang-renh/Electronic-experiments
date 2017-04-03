@@ -12,7 +12,7 @@ module clock
 	 output reg seg_fre		//数码管刷新频率
 	);
 	
-	parameter base_fre = 25;
+	//parameter base_fre = 25;
 	reg[32:0] clk_cnt;
 	
 	always @(posedge clk or posedge clr)
@@ -30,7 +30,7 @@ module clock
 	always @(*)
 	begin
 		Time1 = clk_cnt[25];
-		Time2 = clk_cnt[base_fre+1];
+		Time2 = clk_cnt[26];
 		seg_fre = clk_cnt[15];
 	end
 	//led_control led(.clk(Time1));
@@ -97,16 +97,18 @@ module led_control
 	 input clk,
 	 output reg[7:0] led_state
 	 );
+	 //reg[7:0] led0;
+	 //assign led0=0;
+	// always @(posedge clk)
+	 //begin
+		//led0=led0+1;
+	 //end
 	 
-	 reg[3:0] change;
-	 
-	 always @(posedge clk)
+	 always @(*)
 	 begin
-		//change = $random % 8;
-		led_state = 0;
-		led_state[change] = 1;
+		led_state=led_state+1;
 	 end
-	// switch sw(.led_state(led_state));
+	
 endmodule
 
 ////////////////////
@@ -167,7 +169,7 @@ module top
 	);
 	
 	
-	wire clk;
+	wire inclk;
 	wire seg_fre;
 	wire[7:0] led_state;
 	wire[15:0] NUMS;
@@ -179,55 +181,56 @@ module top
 	//wire[3:0] count3;
 	//wire[3:0] count4;
 	
+	assign led=led_state;
 	clock clock0
 	(
-		.clk(clk)
-		.Time1(clk)
+		.clk(clk),
+		.Time1(inclk),
 		.seg_fre(seg_fre)
 	);
 	
-	led_control led
+	led_control led1
 	(
-		.clk(clk)
+		.clk(inclk),
 		.led_state(led_state)
 	);
 	
 	switch sw
 	(
-		.led_state(led_state)
-		.switch(switch)
+		.led_state(led_state),
+		.switch(switch),
 		.success(carry1)
 	);
 	
 	num_to_seg n_to_s
 	(
-		.seg_fre(seg_fre)
-		.NUMS(NUMS)
-		.segment(segment)
+		.seg_fre(seg_fre),
+		.NUMS(NUMS),
+		.segment(segment),
 		.seg_sel(seg_sel)
 	);
 	
 	dec_counter counter1
 	(
-		.clk(carry1)
-		.NUM(NUMS[3:0])
+		.clk(carry1),
+		.NUM(NUMS[3:0]),
 		.carry(carry2)
 	);
 	dec_counter counter2
 	(
-		.clk(carry2)
-		.NUM(NUMS[7:4])
+		.clk(carry2),
+		.NUM(NUMS[7:4]),
 		.carry(carry3)
 	);
 	dec_counter counter3
 	(
-		.clk(carry3)
-		.NUM(NUMS[11:8])
+		.clk(carry3),
+		.NUM(NUMS[11:8]),
 		.carry(carry4)
 	);
 	dec_counter counter4
 	(
-		.clk(carry4)
+		.clk(carry4),
 		.NUM(NUMS[15:12])
 	);
 endmodule
