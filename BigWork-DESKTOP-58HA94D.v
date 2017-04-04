@@ -75,7 +75,7 @@ module num_to_seg
 	//begin
 		//if (posedge seg_fre)
 			begin
-				seg_sel = seg_sel * 2;
+				seg_sel << 1;	//向左移动一位
 				case(seg_sel)
 					1	:NUM = NUMS[3:0];
 					2	:NUM = NUMS[7:4];

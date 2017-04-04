@@ -1,0 +1,60 @@
+﻿//Author = Zhang Renhui
+
+//生成系统所用时钟
+module clock
+(
+	input clk,
+	input clr,
+	output Time_1s,				//大约1s
+	output segment_refresh		//数码管刷新频率
+);
+endmodule;
+
+//生成8位随机数，控制led灯
+module random
+(
+	input Time_1s,
+	output wire[7:0] led_control
+);
+
+endmodule;
+
+//检测开关输入，并按照当前led状态进行处理
+module switch_solve
+(
+	input[7:0] switch,
+	input[7:0] led_control,
+	output success
+);
+
+endmodule;
+
+//10进制计数器
+module dec_counter
+(
+	input clk,
+	input clr,
+	output carry,
+	output[3:0] num
+);
+
+	always @(posedge(clr))
+	begin
+		num = 0;
+		carry = 0;
+	end
+
+	always @(posedge(clk))
+	begin
+		if(num >= 9)
+		begin
+			num = 0;
+			carry = 1;
+		end
+		else
+		begin
+			carry = 0;
+			num = num + 1;
+		end
+	end
+endmodule;
